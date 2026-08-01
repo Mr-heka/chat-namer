@@ -23,17 +23,23 @@ OUT = os.path.join(HOME, "groups.html")
 GROUP_ORDER = ["Builds", "Marketing", "Community", "Tools", "Systems",
                "Money", "Research", "Ungrouped"]
 
+STRIKE = "\u0336"
 TITLE_RE = re.compile(
     r"^(\S+)\s+([A-Za-z0-9][A-Za-z0-9-]*)\s*(?:\((\S+?)(\d+)%\))?\s*(.*?)\s*/\s*(\d{1,2} \w{3})$")
 
 
 def parse(title):
-    """Split a swept title back into its parts. Unswept titles return None."""
-    m = TITLE_RE.match(title.strip())
+    """Split a swept title back into its parts. Unswept titles return None.
+
+    A closed chat carries U+0336 after every character, so strip that before
+    matching and remember it as a flag."""
+    raw = title.strip()
+    closed = STRIKE in raw
+    m = TITLE_RE.match(raw.replace(STRIKE, ""))
     if not m:
         return None
     lane, token, band, pct, topic, date = m.groups()
-    return {"lane": lane, "token": token, "band": band,
+    return {"lane": lane, "token": token, "band": band, "closed": closed,
             "pct": int(pct) if pct else None, "topic": topic, "date": date}
 
 
@@ -43,7 +49,8 @@ def project_block(token, chats, index):
     badge = (f'<span class="badge">{html.escape(head["band"] or "")}{head["pct"]}%</span>'
              if head["pct"] is not None else "")
     kids = "".join(
-        f'<li><span class="topic">{html.escape(c["topic"])}</span>'
+        f'<li{" class=\'done\'" if c["closed"] else ""}>'
+        f'<span class="topic">{html.escape(c["topic"])}</span>'
         f'<span class="date">{html.escape(c["date"])}</span></li>'
         for c in sorted(chats, key=lambda c: c.get("lastActivityAt", ""), reverse=True))
     return (f'<section><h2><span class="lane">{html.escape(head["lane"])}</span>'
@@ -134,6 +141,8 @@ li{display:flex;gap:12px;padding:5px 0;border-top:1px solid var(--line);font-siz
 .topic{flex:1}
 .date{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .loose{opacity:.65}
+li.done .topic{text-decoration:line-through;opacity:.55}
+li.done .date{opacity:.55}
 </style></head><body><div class="wrap">
 <header><h1 class="title">Chats by group</h1>
 <div class="stamp">{{G}} groups · {{N}} projects · least finished first · {{STAMP}}</div></header>

@@ -76,7 +76,7 @@ topic as the token until projects exist to match against.
    letters, digits and hyphens; punctuation breaks the grouped view's parser.
 6. Build the title per `references/convention.md`. The lane, band and percentage
    come from the index, never from your own read of the chat.
-7. `set_session_title` for each.
+7. Strike the title if the chat is closed (see below), then `set_session_title`.
 8. Append every rename to `$CHAT_NAMER_HOME/renames.log`, one
    `<ISO timestamp>\t<sessionId>\t<old title>\t<new title>` per line. This is the
    only undo path that survives the conversation, so write it even when the sweep
@@ -85,6 +85,33 @@ topic as the token until projects exist to match against.
    `~/.claude/skills/chat-namer/scripts/render-groups.py` to rebuild
    `$CHAT_NAMER_HOME/groups.html`, the grouped view.
 10. Report as a table: old title → new title, plus any `❓` unmatched. Nothing else.
+
+## Closing a chat off
+
+There is no "done" flag in the session API, so a closed chat is marked by striking
+its own title through. It keeps its name and its place in the list, and reads as
+finished while scrolling past.
+
+Strike a title when **either** is true:
+
+- **The user says so.** "close this off", "close off the chat", "mark it done",
+  "that one's finished". Append that session id to
+  `$CHAT_NAMER_HOME/closed.txt`, one per line, so later sweeps keep it struck.
+- **Its project is at 100%.** Band `✅` means every checkbox is ticked, so every
+  chat on that project gets struck automatically.
+
+Build the plain title first, check it against the 48-character limit, then strike
+it last:
+
+```bash
+echo "🎯 PORTAL (✅100%) login flow / 31 Jul" | python3 ~/.claude/skills/chat-namer/scripts/strike.py
+```
+
+The 48-character limit applies to the **plain** title. Striking roughly doubles
+the codepoint count and that is fine; the sidebar measures the visible glyphs.
+
+Reopening is the reverse: drop the id from `closed.txt` and rebuild the title
+plain. Never hand-type the strike marks, and never strike a title twice.
 
 ## Sessions that are mid-turn
 
@@ -136,6 +163,8 @@ Every chat then gets its real name within half an hour, including the current on
   when it kept theirs; when it does, leave that session alone permanently.
 - Don't invent a project token, lane or band. Look them up in the index.
 - Don't skip the rename log. Without it a bad sweep cannot be undone.
+- Don't un-strike a chat the user closed by hand just because its project is still
+  open. `closed.txt` wins over the percentage.
 
 ## Files
 
@@ -143,5 +172,7 @@ Every chat then gets its real name within half an hour, including the current on
   Edit that file to change how chats get named. Nothing else needs touching.
 - `scripts/build-index.py`: builds the project registry. Never hand-edit its output.
 - `scripts/render-groups.py`: builds the grouped view.
+- `scripts/strike.py`: strikes a title through when a chat is closed off, and
+  takes the strike back off.
 
 Router key `sk-gmyyl9` — resolved by the skills index on load.

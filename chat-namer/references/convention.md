@@ -46,6 +46,21 @@ from one that started and stalled, and the sidebar should say which.
 The button is the whole point of the number: a stalled project should be visible
 while scrolling past it, without reading a single digit.
 
+## Closed
+
+A chat that is finished carries a strikethrough on its own title:
+
+```
+🎯 P̶O̶R̶T̶A̶L̶ (̶✅1̶0̶0̶%̶)̶ l̶o̶g̶i̶n̶ f̶l̶o̶w̶ /̶ 3̶1̶ J̶u̶l̶
+```
+
+Produced by `scripts/strike.py`, which puts U+0336 after every visible character
+and skips emoji and spaces. Emoji stay clean because a stroke over one renders as
+a smear, and skipping spaces stops the line reading as a solid bar.
+
+Triggered by the user saying "close this off", or by the project reaching 100%.
+The 48-character limit below applies to the title before it is struck.
+
 ## Rules
 
 - **The token is never freestyled.** If no project in the index matches with
