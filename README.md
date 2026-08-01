@@ -97,6 +97,18 @@ from one that started and stalled.
 The side effect is the useful bit: a sidebar full of ⚫ and 🔴 tells you something
 about how you're working that a list of chat titles never could.
 
+## Closing one off
+
+When a chat is finished, say "close this off" and it puts a line through the name:
+
+```
+🎯 P̶O̶R̶T̶A̶L̶ (̶✅1̶0̶0̶%̶)̶ l̶o̶g̶i̶n̶ f̶l̶o̶w̶ /̶ 3̶1̶ J̶u̶l̶
+```
+
+It keeps its place in the list, so scrolling past tells you what is finished
+without opening anything. Projects that reach 100% get struck automatically.
+Changed your mind? Ask to reopen it and the line comes off.
+
 ## Two things it can't do
 
 **It can't rename the chat you're sitting in.** The API blocks a session from
@@ -120,6 +132,9 @@ Everything you'd want to change is in two files:
   lane. Add your own vocabulary at the top. If a project file gets a bad tag
   (`gold-coast-workshop` becomes `GOLD` rather than `WORKSHOP`), pin it in the
   `OVERRIDE` map on the same page.
+
+A third script, `chat-namer/scripts/strike.py`, does the line-through. You never
+call it yourself.
 
 ## What it touches
 
