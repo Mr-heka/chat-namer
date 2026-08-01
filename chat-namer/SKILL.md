@@ -54,10 +54,12 @@ topic as the token until projects exist to match against.
 
 ## Flow
 
-1. `python3 scripts/build-index.py` to build the project registry at
+1. `python3 ~/.claude/skills/chat-namer/scripts/build-index.py` to build the project registry at
    `$CHAT_NAMER_HOME/index.json`: slug, caps token, lane, percent complete, band,
    aliases. Read it once and keep it for the whole sweep.
-2. `list_sessions` (limit 30). This already excludes the current session.
+2. `list_sessions` (limit 30). This already excludes the current session. Thirty is
+   the sweep's reach, not "all chats": anything older stays as it is unless you
+   raise the limit.
 3. Skip anything already correct: it starts with a lane emoji or `❓`, its date
    matches the session's last activity, and its band and percentage match the
    index. Otherwise re-title it.
@@ -70,13 +72,19 @@ topic as the token until projects exist to match against.
    - word overlap against `aliases`
 
    No confident match means the project does not exist yet. Use `❓` as the lane
-   and the chat's own topic as the token, with no bracket.
+   and the chat's own topic as the token, with no bracket. Keep the token to
+   letters, digits and hyphens; punctuation breaks the grouped view's parser.
 6. Build the title per `references/convention.md`. The lane, band and percentage
    come from the index, never from your own read of the chat.
 7. `set_session_title` for each.
-8. Pipe the final `list_sessions` JSON into `scripts/render-groups.py` to rebuild
+8. Append every rename to `$CHAT_NAMER_HOME/renames.log`, one
+   `<ISO timestamp>\t<sessionId>\t<old title>\t<new title>` per line. This is the
+   only undo path that survives the conversation, so write it even when the sweep
+   is unattended.
+9. Pipe the final `list_sessions` JSON into
+   `~/.claude/skills/chat-namer/scripts/render-groups.py` to rebuild
    `$CHAT_NAMER_HOME/groups.html`, the grouped view.
-9. Report as a table: old title → new title, plus any `❓` unmatched. Nothing else.
+10. Report as a table: old title → new title, plus any `❓` unmatched. Nothing else.
 
 ## Sessions that are mid-turn
 
@@ -102,6 +110,12 @@ What this skill does instead:
   under their project, **least finished first**. That ordering is deliberate: the
   sidebar sorts by what was touched last, this sorts by what needs attention.
 
+## Undoing a sweep
+
+`$CHAT_NAMER_HOME/renames.log` holds every change ever made, oldest first. To roll
+back, read the lines you want, and call `set_session_title` with the old title for
+each session id. Nothing else is needed; the log is the backup.
+
 ## Running it automatically
 
 The sweep is a scheduled task, not a hook. Hooks are shell and cannot call the
@@ -121,6 +135,7 @@ Every chat then gets its real name within half an hour, including the current on
 - Don't overwrite a title the user typed themselves. `set_session_title` reports
   when it kept theirs; when it does, leave that session alone permanently.
 - Don't invent a project token, lane or band. Look them up in the index.
+- Don't skip the rename log. Without it a bad sweep cannot be undone.
 
 ## Files
 

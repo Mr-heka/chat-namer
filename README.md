@@ -39,7 +39,7 @@ as one block instead of four unrelated lines.
 Copy the `chat-namer` folder into your skills directory:
 
 ```bash
-cp -r chat-namer ~/.claude/skills/
+mkdir -p ~/.claude/skills && cp -r chat-namer ~/.claude/skills/
 ```
 
 Then tell it where your projects live. One markdown file per project, anywhere you
@@ -54,10 +54,13 @@ like, with checkboxes for progress:
 ```
 
 ```bash
-export CHAT_NAMER_SOURCES="$HOME/claude-projects/*.md"
+echo 'export CHAT_NAMER_SOURCES="$HOME/claude-projects/*.md"' >> ~/.zshrc
 ```
 
-That's it. Ask Claude to "rename my chats" and it sweeps them.
+Use `~/.bashrc` if you're on bash. Restart Claude afterwards so it picks the
+variable up, then ask it to "rename my chats" and it sweeps them.
+
+Skip that step entirely and it reads `~/claude-projects/*.md` by default.
 
 No project files yet? It still runs. Chats get `❓` and their own topic until
 projects exist to match against, and it never invents a project to fill the gap.
@@ -124,7 +127,11 @@ Reads your project markdown files. Writes two files under `~/.chat-namer/`. Call
 the Claude Code session tools to read chat transcripts and set chat titles.
 
 It does not delete anything, does not archive anything, and will not overwrite a
-title you typed yourself.
+title you typed yourself. Every rename is appended to `~/.chat-namer/renames.log`
+with the old title, so any sweep can be rolled back.
+
+One limit worth knowing: a sweep covers your 30 most recent chats. Older ones stay
+as they are.
 
 ---
 

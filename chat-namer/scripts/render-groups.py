@@ -24,7 +24,7 @@ GROUP_ORDER = ["Builds", "Marketing", "Community", "Tools", "Systems",
                "Money", "Research", "Ungrouped"]
 
 TITLE_RE = re.compile(
-    r"^(\S+)\s+([A-Z0-9][A-Z0-9-]*)\s*(?:\((\S+?)(\d+)%\))?\s*(.*?)\s*/\s*(\d{1,2} \w{3})$")
+    r"^(\S+)\s+([A-Za-z0-9][A-Za-z0-9-]*)\s*(?:\((\S+?)(\d+)%\))?\s*(.*?)\s*/\s*(\d{1,2} \w{3})$")
 
 
 def parse(title):
@@ -40,13 +40,13 @@ def parse(title):
 def project_block(token, chats, index):
     p = index.get(token, {})
     head = chats[0]
-    badge = (f'<span class="badge">{head["band"]}{head["pct"]}%</span>'
+    badge = (f'<span class="badge">{html.escape(head["band"] or "")}{head["pct"]}%</span>'
              if head["pct"] is not None else "")
     kids = "".join(
         f'<li><span class="topic">{html.escape(c["topic"])}</span>'
         f'<span class="date">{html.escape(c["date"])}</span></li>'
-        for c in sorted(chats, key=lambda c: c["date"], reverse=True))
-    return (f'<section><h2><span class="lane">{head["lane"]}</span>'
+        for c in sorted(chats, key=lambda c: c.get("lastActivityAt", ""), reverse=True))
+    return (f'<section><h2><span class="lane">{html.escape(head["lane"])}</span>'
             f'<span class="token">{html.escape(token)}</span>{badge}'
             f'<span class="count">{len(chats)}</span></h2>'
             f'<p class="slug">{html.escape(p.get("slug", "no project file"))}</p>'
@@ -55,6 +55,8 @@ def project_block(token, chats, index):
 
 def main():
     sessions = json.load(sys.stdin)
+    if not os.path.exists(INDEX):
+        sys.exit(f"no index at {INDEX} — run build-index.py first")
     index = {p["token"]: p for p in json.load(open(INDEX))["projects"]}
 
     projects, unswept = {}, []
@@ -93,6 +95,9 @@ def main():
                        for s in unswept)
         rows.append(f'<section class="loose"><ul>{kids}</ul></section>')
 
+    if os.path.islink(OUT):
+        os.unlink(OUT)
+    os.makedirs(HOME, exist_ok=True)
     open(OUT, "w").write(
         TEMPLATE.replace("{{ROWS}}", "".join(rows))
                 .replace("{{STAMP}}", time.strftime("%-d %b %H:%M"))

@@ -76,13 +76,23 @@ def group_for(lane):
     return "Ungrouped"
 
 
+def clean_token(word):
+    """Tokens are parsed back out of titles later, so they may only contain the
+    characters that grammar accepts. Punctuation and accents get stripped here
+    rather than silently truncating a title downstream."""
+    t = re.sub(r"[^A-Z0-9]", "", word.upper())[:12]
+    return t if t and t[0].isalnum() else ""
+
+
 def token_for(slug):
     if slug in OVERRIDE:
-        return OVERRIDE[slug]
+        return clean_token(OVERRIDE[slug]) or "PROJECT"
     for w in slug.split("-"):
         if w.lower() not in STOP and not w.isdigit() and len(w) > 2:
-            return w.upper()[:12]
-    return slug.split("-")[0].upper()[:12]
+            t = clean_token(w)
+            if t:
+                return t
+    return clean_token(slug.split("-")[0]) or "PROJECT"
 
 
 def band_for(pct):
@@ -107,7 +117,7 @@ def band_for(pct):
 def heading(text):
     m = re.search(r"^#\s+(.+)$", text, re.M)
     if m:
-        return re.sub(r"\s*[—-].*$", "", m.group(1)).strip()[:48]
+        return re.sub(r"\s+[\u2014\u2013-]\s+.*$", "", m.group(1)).strip()[:48]
     m = re.search(r"^(?:project|title):\s*(.+)$", text, re.M)
     return m.group(1).strip()[:48] if m else ""
 
@@ -151,11 +161,18 @@ def main():
         if base not in seen:
             seen.add(base)
             continue
-        extra = next((w.upper()[:6] for w in p["slug"].split("-")[1:]
+        extra = next((clean_token(w)[:6] for w in p["slug"].split("-")[1:]
                       if w.lower() not in STOP and len(w) > 2), None)
-        p["token"] = (f"{base}-{extra}" if extra else f"{base}-2")[:14]
-        seen.add(p["token"])
+        candidate = (f"{base}-{extra}" if extra else f"{base}-2")[:14]
+        n = 2
+        while candidate in seen:
+            candidate = f"{base}-{n}"[:14]
+            n += 1
+        p["token"] = candidate
+        seen.add(candidate)
 
+    if os.path.islink(OUT):
+        os.unlink(OUT)
     json.dump({"generated": time.strftime("%Y-%m-%d %H:%M"),
                "count": len(projects), "projects": projects},
               open(OUT, "w"), indent=1, ensure_ascii=False)
