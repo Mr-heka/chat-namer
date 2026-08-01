@@ -56,7 +56,7 @@ def project_block(token, chats, index):
 def main():
     sessions = json.load(sys.stdin)
     if not os.path.exists(INDEX):
-        sys.exit(f"no index at {INDEX} — run build-index.py first")
+        sys.exit(f"no index at {INDEX}. Run build-index.py first")
     index = {p["token"]: p for p in json.load(open(INDEX))["projects"]}
 
     projects, unswept = {}, []

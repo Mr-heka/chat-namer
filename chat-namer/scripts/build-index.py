@@ -178,8 +178,8 @@ def main():
               open(OUT, "w"), indent=1, ensure_ascii=False)
     print(f"{len(projects)} projects -> {OUT}")
     if not projects:
-        print(f"no project files matched {SOURCES} — every chat will be titled ❓ "
-              f"until some exist, which is fine")
+        print(f"no project files matched {SOURCES}. Every chat will be titled "
+              f"\u2753 until some projects exist, which is fine")
 
 
 if __name__ == "__main__":
