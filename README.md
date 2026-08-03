@@ -36,7 +36,11 @@ as one block instead of four unrelated lines.
 
 ## Install
 
-Copy the `chat-namer` folder into your skills directory:
+Easiest way: paste the block in [SETUP-PROMPT.md](SETUP-PROMPT.md) into Claude
+Code. It installs the skill, finds your projects, sets up the hourly sweep and
+names your chats, in one go.
+
+By hand instead, copy the `chat-namer` folder into your skills directory:
 
 ```bash
 mkdir -p ~/.claude/skills && cp -r chat-namer ~/.claude/skills/
@@ -67,15 +71,23 @@ projects exist to match against, and it never invents a project to fill the gap.
 
 ## Keep it running
 
-The useful version is the one you never think about:
+You should never have to ask for a sweep. The setup prompt creates an hourly
+scheduled task as part of installing, so percentages update themselves as you
+tick things off, dates stay current, and new chats get named while you are
+working on something else.
+
+If you skipped the setup prompt, or your build of Claude Code has no scheduled
+tasks, this does the same job:
 
 ```
-/schedule every 30 minutes: run the chat-namer skill, sweep any session whose
-title, percentage or date is out of date, report nothing unless something changed
+/schedule hourly: run the chat-namer skill, sweep any session whose title,
+percentage or date is out of date, report nothing unless something changed
 ```
 
-Now percentages update themselves as you tick things off, dates stay current, and
-new chats get named without you asking.
+Each run is capped at the twelve chats most in need of a name and reads them
+with parallel sub-agents, so a sweep finishes in a couple of minutes and never
+runs long enough to collide with the next one. Anything it skips is picked up on
+the following pass.
 
 ## The percentage
 

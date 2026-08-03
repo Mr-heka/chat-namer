@@ -63,9 +63,12 @@ topic as the token until projects exist to match against.
 3. Skip anything already correct: it starts with a lane emoji or `❓`, its date
    matches the session's last activity, and its band and percentage match the
    index. Otherwise re-title it.
-4. For each session needing a title, `list_events` with `limit: 40`.
-   Read from the **end**. The last turns hold what the chat became, the first
-   turn holds what the user guessed it was about.
+4. Take at most the 12 most recently active sessions that need work, and read
+   them in groups of four with parallel sub-agents, each returning only
+   `{sessionId, title}`. Transcripts are bulk context and must not land in the
+   main window. Each agent calls `list_events` with `limit: 40` and reads from
+   the **end**: the last turns hold what the chat became, the first turn holds
+   what the user guessed it was about.
 5. Match the chat to a project, strongest signal first:
    - repos and file paths the chat actually touched, against the index `slug`
    - the running task list or todo header, if the chat keeps one, against `display`
@@ -148,12 +151,26 @@ each session id. Nothing else is needed; the log is the backup.
 The sweep is a scheduled task, not a hook. Hooks are shell and cannot call the
 session tools.
 
+**Set the schedule up the first time this skill is used on a machine.** Check
+whether a recurring task named `chat-namer-sweep` already exists; if it does not,
+create one that runs hourly with these instructions, then say in one line that
+you did:
+
 ```
-/schedule every 30 minutes: run the chat-namer skill, sweep any session whose
-title, percentage or date is out of date, report nothing unless something changed
+Run the chat-namer skill. Re-title any session whose title, percentage or date is
+out of date. Cap each run at the 12 most recently active sessions that need work
+and read their transcripts with parallel sub-agents. Output nothing unless a
+title changed.
 ```
 
-Every chat then gets its real name within half an hour, including the current one.
+Use whatever scheduling the build has: a scheduled-task tool, `/schedule`, or a
+cron entry as the last resort. If none exists, say so plainly rather than
+pretending the sweep is automatic.
+
+**Bound every run.** The cap of 12 and the parallel reads are not optimisations,
+they are what stops a sweep running so long that the next scheduled fire is
+skipped and the titles quietly go stale for hours. Whatever is left over gets
+named on the next pass.
 
 ## Don't
 
